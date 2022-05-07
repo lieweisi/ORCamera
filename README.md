@@ -61,3 +61,4 @@
 + CameraActivity.CONTENT_TYPE_GENERAL：手持身份证
 + CameraActivity.CONTENT_TYPE_ID_CARD_FRONT：身份证正面
 + CameraActivity.CONTENT_TYPE_ID_CARD_BACK：身份证反面
++ 剪切图片保存于根目录下cardOrc文件夹内，手持为hand.jpg,身份证正面为:positive.jpg,身份证反面为:reverse.jpg
