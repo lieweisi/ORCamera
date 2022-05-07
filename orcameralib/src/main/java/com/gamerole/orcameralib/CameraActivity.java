@@ -15,11 +15,13 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Surface;
 import android.view.View;
 import android.widget.ImageView;
@@ -114,11 +116,14 @@ public class CameraActivity extends AppCompatActivity {
 
     private void initParams() {
         String outputPath = getIntent().getStringExtra(KEY_OUTPUT_FILE_PATH);
+        Log.e("liluo","地址:"+outputPath);
         if (outputPath != null) {
             outputFile = new File(outputPath);
+
         }
 
         contentType = getIntent().getStringExtra(KEY_CONTENT_TYPE);
+        Log.e("liluo","contentType:"+contentType);
         if (contentType == null) {
             contentType = CONTENT_TYPE_GENERAL;
         }
@@ -142,6 +147,7 @@ public class CameraActivity extends AppCompatActivity {
                 cropMaskView.setVisibility(View.INVISIBLE);
                 break;
         }
+        Log.e("liluo","页面:"+maskType);
         cameraView.setMaskType(maskType);
         cropMaskView.setMaskType(maskType);
     }
@@ -236,6 +242,17 @@ public class CameraActivity extends AppCompatActivity {
                         overlayView.setTypeWide();
                         showCrop();
                     } else {
+                        String savePath="";
+                        switch (cropMaskView.getMaskType()){
+                            case MaskView.MASK_TYPE_ID_CARD_FRONT:
+                                savePath=Environment.getExternalStorageDirectory().getAbsolutePath()+"/cardOrc/positive.jpg";
+                                break;
+                            case MaskView.MASK_TYPE_ID_CARD_BACK:
+                                savePath=Environment.getExternalStorageDirectory().getAbsolutePath()+"/cardOrc/reverse.jpg";
+                                break;
+                        }
+                        Log.e("liluo","保存地址:"+savePath);
+                        saveBitmap(bitmap,savePath);
                         displayImageView.setImageBitmap(bitmap);
                         showResultConfirm();
                     }
@@ -270,11 +287,44 @@ public class CameraActivity extends AppCompatActivity {
                     break;
             }
             Bitmap cropped = cropView.crop(rect);
+            String savePath="";
+            switch (maskType){
+                case MaskView.MASK_TYPE_NONE:
+                    savePath=Environment.getExternalStorageDirectory().getAbsolutePath()+"/cardOrc/hand.jpg";
+                    break;
+            }
+            Log.e("liluo","保存地址:"+savePath);
+            saveBitmap(cropped,savePath);
             displayImageView.setImageBitmap(cropped);
             cropAndConfirm();
         }
     };
-
+    public static void saveBitmap(Bitmap bitmap,String path) {
+        String savePath;
+        File filePic;
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            savePath = path;
+        } else {
+            Log.e("tag", "saveBitmap failure : sdcard not mounted");
+            return;
+        }
+        try {
+            Log.e("liluo","savePath:"+savePath);
+            filePic = new File(savePath);
+            if (!filePic.exists()) {
+                filePic.getParentFile().mkdirs();
+                filePic.createNewFile();
+            }
+            FileOutputStream fos = new FileOutputStream(filePic);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            Log.e("tag", "saveBitmap: " + e.getMessage());
+            return;
+        }
+        Log.i("tag", "saveBitmap success: " + filePic.getAbsolutePath());
+    }
     private void cropAndConfirm() {
         cameraView.getCameraControl().pause();
         updateFlashMode();
